@@ -1,4 +1,4 @@
-# codex-agent-setup
+# coding-agent-setup
 
 Personal subagent definitions and delegation rules for Codex, Claude Code,
 OpenCode v2, and Grok Build. Codex and OpenCode get five roles; Claude Code and
@@ -116,7 +116,7 @@ Install the tools you intend to use and have Python 3 available. The installer
 uses only Python's standard library and installs configuration for all four
 tools. It does not install the tools or configure credentials.
 
-From the cloned `codex-agent-setup` directory, preview a fresh installation:
+From the cloned `coding-agent-setup` directory, preview a fresh installation:
 
 ```sh
 python3 install-agents.py --dry-run
@@ -191,9 +191,24 @@ Use `--target-home /path/to/home` to uninstall from another home directory.
 
 ## Repository files
 
+```text
+coding-agent-setup/
+├── codex/
+├── claude/
+├── opencode/
+├── grok/
+├── delegation.md
+├── install-agents.py
+├── install-claude-opencode.py
+├── previous-install-hashes.json
+├── tests/
+├── README.md
+└── LICENSE
+```
+
 | Path | Purpose |
 | --- | --- |
-| `fast.toml`, `worker.toml`, `reviewer.toml`, `explorer.toml`, `default.toml` | Codex agent definitions |
+| `codex/*.toml` | Codex agent definitions |
 | `claude/*.md` | Claude Code agent definitions |
 | `opencode/*.md` | OpenCode v2 agent definitions |
 | `opencode/opencode.jsonc` | OpenCode v2 built-in `explore` and `general` model overrides |
