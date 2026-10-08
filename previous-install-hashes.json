@@ -60,10 +60,12 @@
     "27a5d6c0b95e7c622c0f44857a4eb95ce3e655f499fbc7ee3aa9d7a099157c61"
   ],
   ".codex/agents/explorer.toml": [
-    "ea505a70fb9949b0713aa410e8efbef30ebb3b9ed8a27ab393c0446c78db7012"
+    "ea505a70fb9949b0713aa410e8efbef30ebb3b9ed8a27ab393c0446c78db7012",
+    "c8b49b120ad77298e0e7ea50e2c446938f4bea0da6dfa7be2ec7b415b03dadd8"
   ],
   ".codex/agents/default.toml": [
-    "e2f1820cc82d5c47e06700f21315c6bb44f2e82a67096aafed5849c93e1e8ab2"
+    "e2f1820cc82d5c47e06700f21315c6bb44f2e82a67096aafed5849c93e1e8ab2",
+    "41238470069ffeff2d339ea94d0180152d43ab87d56e8a44bb56be50433c23cb"
   ],
   ".grok/agents/worker.md": [
     "44fa199d9f8fa0ba40ce0afd659dad3044e33da156591ff00ecbed3e91a50bbf"

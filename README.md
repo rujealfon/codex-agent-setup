@@ -139,17 +139,20 @@ The installer checks all destinations before writing. Identical files stay as
 they are. With `--update`, it replaces only files that match recorded earlier
 versions in [previous-install-hashes.json](previous-install-hashes.json) and saves
 a backup beside each changed file as `<filename>.bak-<UTC timestamp>`. Customized
-instructions, agents, or OpenCode settings cause it to stop before changing any
-files. `--update` does not force replacement of unrecognized files.
+instructions or agents cause it to stop before changing any files. `--update`
+does not force replacement of unrecognized files.
 
 If you have existing personal instructions, review the reported conflict and
 merge the delegation policy into the appropriate instruction file manually.
 Keep your existing instructions. The installer does not perform this merge.
 
-If you already have a customized `~/.config/opencode/opencode.jsonc`, the
-installer preserves it and reports a conflict. Merge the `explore` and `general`
-entries under `agents` from [opencode/opencode.jsonc](opencode/opencode.jsonc)
-into your existing settings manually.
+If your customized `~/.config/opencode/opencode.jsonc` uses plain JSON and
+already contains all the specified `explore` and `general` agent fields, the
+installer preserves the entire file and continues. Extra settings, agents,
+and agent fields stay intact. Uninstall still preserves this customized file.
+Otherwise, it reports a conflict before changing any files. Merge the entries
+under `agents` from [opencode/opencode.jsonc](opencode/opencode.jsonc) manually.
+Configs with JSONC comments or trailing commas still require manual review.
 
 Start fresh tool sessions after installing. To preview installation under another
 home directory, use `--target-home /path/to/home --dry-run`. This option is also

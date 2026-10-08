@@ -4,6 +4,7 @@ model = "gpt-6-luna"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 developer_instructions = """
-Explore the assigned codebase question without changing files.
-Trace relevant execution paths and return findings with file references.
+Investigate the assigned codebase question using targeted searches and file reads.
+Trace the relevant execution paths and return concise findings with file and symbol references.
+State unresolved questions and distinguish observed behavior from inference.
 """

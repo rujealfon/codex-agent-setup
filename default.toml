@@ -3,6 +3,6 @@ description = "Handles general tasks that do not fit a specialist role, includin
 model = "gpt-6.1-sol"
 model_reasoning_effort = "medium"
 developer_instructions = """
-Complete the assigned task within its stated scope.
-Return a concise summary, relevant verification, and any unresolved issues.
+Complete the assigned general task within its stated scope.
+Return a concise summary of results, verification, and unresolved issues.
 """
