@@ -3,7 +3,8 @@
     "f5aa4dbe58a21bbd619b16ac458480587f6a33f8f7e82cac10d46f17f95f29b5"
   ],
   ".codex/agents/reviewer.toml": [
-    "2fe2c07fb146978c9ebb0a66a3e5ab5292185a5d354003958a879d757bee9541"
+    "2fe2c07fb146978c9ebb0a66a3e5ab5292185a5d354003958a879d757bee9541",
+    "8322558fb5063b28ccda060f26bc2e2fe7f2604f5c72f299fa3ee976cac9b96b"
   ],
   ".claude/agents/fast.md": [
     "1617a7374bcdea29c53ef72960793b3f3aa8847793cee114141e04f1f681aa60",
@@ -34,5 +35,8 @@
   ],
   ".claude/agents/worker.md": [
     "be6767f9e781aa79a41af9fa1e32b8087ee63239dcfc22c5d4fa6ea297bfe081"
+  ],
+  ".codex/agents/worker.toml": [
+    "6b60b36460f6155bb2d8aef43883e156fdd4f08d9aa76deaa8e185474c88242c"
   ]
 }

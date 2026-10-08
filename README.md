@@ -8,7 +8,7 @@ The delegation rules apply across projects on the machine where you install them
 
 | Tool | `fast` | `worker` | `reviewer` |
 | --- | --- | --- | --- |
-| Codex | GPT-6 Luna, high | GPT-6.1 Sol, high | GPT-6 Astra, high |
+| Codex | GPT-6 Luna, medium | GPT-6.1 Sol, medium | GPT-6 Astra, medium |
 | Claude Code | Haiku 5.5, medium | Sonnet 5.5, medium | Opus 5.5, medium |
 | OpenCode | Muse Spark 1.3 Contributor, xhigh | DeepSeek v4.1 Flash, max | GLM 5.3 Flash, max |
 
