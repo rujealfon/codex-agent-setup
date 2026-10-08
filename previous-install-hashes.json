@@ -38,5 +38,11 @@
   ],
   ".codex/agents/worker.toml": [
     "6b60b36460f6155bb2d8aef43883e156fdd4f08d9aa76deaa8e185474c88242c"
+  ],
+  ".grok/agents/fast.md": [
+    "caf993c2b766e3ebee1a1bd7c2343375e3f10f66ee043fa62196d25a84c9035b"
+  ],
+  ".grok/agents/reviewer.md": [
+    "a4cd6beb1b57aaf1ba84d5fd028490043b32f56a5c329b51f0eeedbc720aaede"
   ]
 }

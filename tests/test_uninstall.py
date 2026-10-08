@@ -16,7 +16,7 @@ class UninstallTests(unittest.TestCase):
         installed = self.run_command()
         self.assertEqual(installed.returncode, 0, installed.stderr)
         self.installed_files = [path for path in self.home.rglob("*") if path.is_file()]
-        self.assertEqual(len(self.installed_files), 12)
+        self.assertEqual(len(self.installed_files), 16)
 
     def run_command(self, *arguments):
         return subprocess.run(
@@ -45,6 +45,38 @@ class UninstallTests(unittest.TestCase):
 
         repeated = self.run_command("--uninstall")
         self.assertEqual(repeated.returncode, 0, repeated.stderr)
+
+    def test_grok_native_agents_and_policy_are_installed_exactly(self):
+        expected = {
+            ".grok/agents/fast.md": "grok/fast.md",
+            ".grok/agents/worker.md": "grok/worker.md",
+            ".grok/agents/reviewer.md": "grok/reviewer.md",
+            ".grok/rules/delegation.md": "delegation.md",
+        }
+        installed = {
+            str(path.relative_to(self.home))
+            for path in (self.home / ".grok").rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(installed, set(expected))
+        for target, source in expected.items():
+            with self.subTest(target=target):
+                self.assertEqual((self.home / target).read_bytes(), (ROOT / source).read_bytes())
+
+    def test_uninstall_preserves_grok_config_credentials_and_customized_agent(self):
+        config = self.home / ".grok/config.toml"
+        config.write_text('model = "dummy-personal-model"\n')
+        credentials = self.home / ".grok/credentials.json"
+        credentials.write_text('{"apiKey": "dummy-test-key"}\n')
+        agent = self.home / ".grok/agents/worker.md"
+        agent.write_text("My custom Grok agent\n")
+        before = {path: path.read_bytes() for path in (config, credentials, agent)}
+
+        removed = self.run_command("--uninstall")
+        self.assertEqual(removed.returncode, 1)
+        self.assertEqual({path: path.read_bytes() for path in before}, before)
+        self.assertIn(str(agent), removed.stdout)
+        self.assertTrue(all(not path.exists() for path in self.installed_files if path != agent))
 
     def test_customized_agent_and_instructions_are_preserved(self):
         policy = self.home / ".config/opencode/AGENTS.md"

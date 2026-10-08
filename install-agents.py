@@ -1,4 +1,4 @@
-"""Install or uninstall personal Codex, Claude Code, and OpenCode agent setup files."""
+"""Install or uninstall personal Codex, Claude Code, OpenCode, and Grok Build agent setup files."""
 
 import argparse
 from datetime import datetime, timezone
@@ -33,6 +33,10 @@ def main():
         ("opencode/worker.md", ".config/opencode/agents/worker.md"),
         ("opencode/reviewer.md", ".config/opencode/agents/reviewer.md"),
         ("delegation.md", ".config/opencode/AGENTS.md"),
+        ("grok/fast.md", ".grok/agents/fast.md"),
+        ("grok/worker.md", ".grok/agents/worker.md"),
+        ("grok/reviewer.md", ".grok/agents/reviewer.md"),
+        ("delegation.md", ".grok/rules/delegation.md"),
     ]
 
     if args.uninstall:

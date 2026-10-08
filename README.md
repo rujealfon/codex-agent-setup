@@ -1,7 +1,8 @@
 # codex-agent-setup
 
-Personal subagent definitions and delegation rules for Codex, Claude Code, and
-OpenCode v2. Each tool gets three roles with a configured model and effort level.
+Personal subagent definitions and delegation rules for Codex, Claude Code,
+OpenCode v2, and Grok Build. Each tool gets three roles with a configured model
+and effort level.
 The delegation rules apply across projects on the machine where you install them.
 
 ## Models and roles
@@ -11,6 +12,7 @@ The delegation rules apply across projects on the machine where you install them
 | Codex | GPT-6 Luna, medium | GPT-6.1 Sol, medium | GPT-6 Astra, medium |
 | Claude Code | Haiku 5.5, medium | Sonnet 5.5, medium | Opus 5.5, medium |
 | OpenCode | Muse Spark 1.3 Contributor, xhigh | DeepSeek v4.1 Flash, max | GLM 5.3 Flash, max |
+| Grok Build | Grok 4.7, low | Grok 4.7, medium | Grok 4.7, high |
 
 - `fast` handles focused searches and straightforward independent tasks.
 - `worker` implements bounded changes and runs relevant checks.
@@ -32,6 +34,11 @@ before using the agents. [Claude models](https://platform.claude.com/docs/en/mod
 [OpenAI models](https://developers.openai.com/api/docs/models), and
 [OpenCode model variants](https://opencode.ai/v2/docs/models#variants).
 
+Grok Build uses `grok-4.7` for all three native agents, with low effort for
+`fast`, medium for `worker`, and high for `reviewer`. The reviewer sets `capabilityMode: read-only`, which excludes file
+edits and shell execution. These fields follow the
+[Grok agent schema](https://github.com/xai-org/grok-build/blob/main/crates/codegen/xai-grok-agent/src/config.rs).
+
 ## Global instructions and installation paths
 
 `~` means your home directory. These paths are personal configuration and apply
@@ -42,6 +49,7 @@ across projects; they are separate from instruction files inside a repository.
 | Codex | `~/.codex/AGENTS.md` | `~/.codex/AGENTS.md` | `~/.codex/agents/*.toml` |
 | Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/rules/delegation.md` | `~/.claude/agents/*.md` |
 | OpenCode v2 | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/agents/*.md` |
+| Grok Build | `~/.grok/AGENTS.md` or `~/.grok/rules/*.md` | `~/.grok/rules/delegation.md` | `~/.grok/agents/*.md` |
 
 Claude Code supports `~/.claude/CLAUDE.md` as global personal instructions.
 It also loads global rules from `~/.claude/rules/`. This setup uses the separate
@@ -64,10 +72,20 @@ That import is a Claude-specific feature. OpenCode v2 reads `AGENTS.md` directly
 and does not use `CLAUDE.md` as a fallback. [Claude project instruction loading](https://code.claude.com/docs/en/memory#agentsmd)
 and [OpenCode v2 instructions](https://opencode.ai/v2/docs/instructions).
 
+Grok Build loads global rules from `~/.grok/rules/` and project `AGENTS.md`
+files. This setup installs native Grok agents and a separate delegation rule;
+it does not change `~/.grok/config.toml` or your main model. Project agents under
+`.grok/agents/` can override the global agents with the same names. Grok can
+also load Claude instruction files and rules through its compatibility settings.
+Use `grok inspect --json` to inspect discovered configuration and `/config-agents`
+to check the available agents. See
+[Grok instructions](https://docs.x.ai/build/features/project-rules) and
+[Grok subagents](https://docs.x.ai/build/features/subagents).
+
 ## Install or upgrade
 
 Install the tools you intend to use and have Python 3 available. The installer
-uses only Python's standard library and installs configuration for all three
+uses only Python's standard library and installs configuration for all four
 tools. It does not install the tools or configure credentials.
 
 From the cloned `codex-agent-setup` directory, preview a fresh installation:
@@ -118,7 +136,7 @@ Remove the recognized agent definitions and delegation rules:
 python3 install-agents.py --uninstall
 ```
 
-Uninstall checks the same twelve destinations as installation. It removes files
+Uninstall checks the same sixteen destinations as installation. It removes files
 that match the current definitions or recorded earlier versions of this setup.
 Customized files, empty personal instruction files, symlinks, and directories
 are preserved and reported for manual review. Recognized files are still removed
@@ -140,8 +158,9 @@ Use `--target-home /path/to/home` to uninstall from another home directory.
 | `fast.toml`, `worker.toml`, `reviewer.toml` | Codex agent definitions |
 | `claude/*.md` | Claude Code agent definitions |
 | `opencode/*.md` | OpenCode v2 agent definitions |
+| `grok/*.md` | Grok Build agent definitions |
 | `delegation.md` | Shared delegation policy copied to each tool's global instruction location |
-| `install-agents.py` | Combined installer and uninstaller for all three tools |
+| `install-agents.py` | Combined installer and uninstaller for all four tools |
 | `install-claude-opencode.py` | Compatibility entry point that calls the combined installer |
 | `previous-install-hashes.json` | Fingerprints of recognized earlier configurations for safe upgrades |
 | `tests/test_uninstall.py` | Tests removal and preservation behavior in temporary home directories |
@@ -152,6 +171,8 @@ are the configuration each tool reads.
 
 Configuration syntax and installer behavior have been checked locally. Live
 delegation and access to every configured model have not been verified.
+Grok Build 1.0.46 discovers the native agents and delegation rule in a temporary
+home directory with `grok inspect --json`.
 
 Run the tests with Python's standard library:
 
@@ -161,7 +182,9 @@ python3 -B -m unittest discover -s tests -v
 
 Agent format references: [Codex subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents),
 [Claude subagents](https://code.claude.com/docs/en/sub-agents), and
-[OpenCode v2 agents](https://opencode.ai/v2/docs/agents).
+[OpenCode v2 agents](https://opencode.ai/v2/docs/agents). Grok Build references:
+[subagents](https://docs.x.ai/build/features/subagents) and
+[agent definitions](https://github.com/xai-org/grok-build/blob/main/crates/codegen/xai-grok-agent/README.md).
 
 ## License
 
