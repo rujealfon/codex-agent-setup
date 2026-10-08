@@ -38,11 +38,11 @@ def main():
     home = args.target_home.expanduser().resolve()
     previous = json.loads((source / "previous-install-hashes.json").read_text())
     files = [
-        ("fast.toml", ".codex/agents/fast.toml"),
-        ("worker.toml", ".codex/agents/worker.toml"),
-        ("reviewer.toml", ".codex/agents/reviewer.toml"),
-        ("explorer.toml", ".codex/agents/explorer.toml"),
-        ("default.toml", ".codex/agents/default.toml"),
+        ("codex/fast.toml", ".codex/agents/fast.toml"),
+        ("codex/worker.toml", ".codex/agents/worker.toml"),
+        ("codex/reviewer.toml", ".codex/agents/reviewer.toml"),
+        ("codex/explorer.toml", ".codex/agents/explorer.toml"),
+        ("codex/default.toml", ".codex/agents/default.toml"),
         ("delegation.md", ".codex/AGENTS.md"),
         ("claude/fast.md", ".claude/agents/fast.md"),
         ("claude/worker.md", ".claude/agents/worker.md"),
