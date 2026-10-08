@@ -1,0 +1,9 @@
+name = "reviewer"
+description = "Reviews complex logic, bugs, and security risks."
+model = "gpt-6-astra"
+model_reasoning_effort = "high"
+sandbox_mode = "read-only"
+developer_instructions = """
+Review the assigned changes for concrete defects.
+Report evidence with file references.
+"""

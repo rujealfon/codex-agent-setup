@@ -1,0 +1,38 @@
+{
+  ".codex/agents/fast.toml": [
+    "f5aa4dbe58a21bbd619b16ac458480587f6a33f8f7e82cac10d46f17f95f29b5"
+  ],
+  ".codex/agents/reviewer.toml": [
+    "2fe2c07fb146978c9ebb0a66a3e5ab5292185a5d354003958a879d757bee9541"
+  ],
+  ".claude/agents/fast.md": [
+    "1617a7374bcdea29c53ef72960793b3f3aa8847793cee114141e04f1f681aa60",
+    "ccbb926ad121e99ad98acdd2e39da4817c2d4ca00411aa129f6e5243e6e98ab9"
+  ],
+  ".claude/agents/reviewer.md": [
+    "04deec75cf2f615a5a27d38a9260af8e24cead7f1d3e9a26b30ba5fed4d9cc08",
+    "d15e2100d2d331093122beb2473c5aa59c05a19b100b83cd9b02c4bd79e89433"
+  ],
+  ".config/opencode/agents/fast.md": [
+    "925cb23c83ecdbb843d76e58b5e42b3e919fef4543d548d4693ead553aa7033f",
+    "95dedb47af511932f2a28c7aa27a9cca9f33c291a2822ffc5696d7fc0ad06708"
+  ],
+  ".config/opencode/agents/reviewer.md": [
+    "f07c98571e8bc6054c5834d2781b8721b270fc012a7efe51cea7655e7f00b59a"
+  ],
+  ".claude/rules/delegation.md": [
+    "a932d8c8683bccdad055008e7707bfc3d60bc3999eea82bb997810b598aff127"
+  ],
+  ".config/opencode/AGENTS.md": [
+    "a932d8c8683bccdad055008e7707bfc3d60bc3999eea82bb997810b598aff127"
+  ],
+  ".codex/AGENTS.md": [
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  ],
+  ".config/opencode/agents/worker.md": [
+    "5136026e309b19193fabf6e429f00e4c2abc1a70003e7ccb67d39e04cb030b66"
+  ],
+  ".claude/agents/worker.md": [
+    "be6767f9e781aa79a41af9fa1e32b8087ee63239dcfc22c5d4fa6ea297bfe081"
+  ]
+}
