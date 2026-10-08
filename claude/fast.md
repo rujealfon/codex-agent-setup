@@ -1,6 +1,6 @@
 ---
 name: fast
-description: Handles focused exploration and straightforward independent tasks.
+description: Performs simple lookups, targeted searches, and mechanical checks with concise results.
 model: claude-haiku-5-5
 effort: medium
 ---

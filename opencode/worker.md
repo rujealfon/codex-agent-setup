@@ -1,5 +1,5 @@
 ---
-description: Implements bounded features, bug fixes, and tests within an assigned scope.
+description: Implements assigned changes within clear file ownership and verifies the affected behavior.
 mode: subagent
 model: opencode-go/deepseek-v4.1-flash#max
 ---

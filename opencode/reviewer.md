@@ -1,7 +1,7 @@
 ---
-description: Reviews complex logic, bugs, and security risks.
+description: Independently reviews changes for correctness, regressions, security issues, and missing validation.
 mode: subagent
-model: opencode-go/glm-5.3-flash#max
+model: opencode-go/glm-5.3#max
 permissions:
   - action: "*"
     resource: "*"

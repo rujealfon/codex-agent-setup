@@ -3,11 +3,21 @@
 When acting as the primary agent, use subagents when independent work can run
 in parallel and delegation would materially improve speed or quality.
 
-- Use `fast` for focused exploration and straightforward independent tasks.
-- Use `worker` for bounded implementation, bug fixes, and tests.
-- Use `reviewer` for complex correctness and security reviews.
+- Use `fast` for simple lookups, targeted searches, and mechanical checks.
+- Use `worker` to implement a defined change within clear file ownership and
+  verify the affected behavior.
+- Use `reviewer` for independent assessment of correctness, regressions,
+  security issues, and missing validation.
+- For investigation across files without code edits, use Codex `explorer`,
+  OpenCode `explore`, or Claude Code `Explore` when available.
+- For mixed investigation and implementation without a clear specialist, use
+  Codex `default`, OpenCode `general`, or Claude Code `general-purpose` when
+  available. Otherwise, handle the task as the primary agent or split it into
+  clearly scoped assignments for the available roles.
 - Use each agent's configured model and effort settings.
 - Give each agent a bounded task and expected output.
+- Include relevant context, constraints, and completion criteria in assignments.
+- Run dependent tasks in order; parallelize only independent work.
 - Assign file edits to agents with distinct scopes to avoid overlapping changes.
 - Verify returned work before incorporating it.
 - Handle small tasks directly.

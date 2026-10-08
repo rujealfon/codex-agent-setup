@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Reviews complex logic, bugs, and security risks.
+description: Independently reviews changes for correctness, regressions, security issues, and missing validation.
 model: claude-opus-5-5
 effort: medium
 tools: Read, Glob, Grep, LSP, WebFetch, WebSearch

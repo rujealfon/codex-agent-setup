@@ -1,5 +1,5 @@
 name = "fast"
-description = "Handles focused searches and straightforward tasks."
+description = "Performs simple lookups, targeted searches, and mechanical checks with concise results."
 model = "gpt-6-luna"
 model_reasoning_effort = "medium"
 developer_instructions = """
