@@ -1,6 +1,6 @@
 ---
 name: worker
-description: Implements bounded features, bug fixes, and tests within an assigned scope.
+description: Implements assigned changes within clear file ownership and verifies the affected behavior.
 model: claude-sonnet-5-5
 effort: medium
 ---

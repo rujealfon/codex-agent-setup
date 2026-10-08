@@ -9,6 +9,23 @@ import shutil
 import tempfile
 
 
+def opencode_agents_match(installed, desired):
+    """Accept configured agent fields while preserving unrelated personal settings."""
+    try:
+        config = json.loads(installed)
+        required = json.loads(desired)["agents"]
+    except (ValueError, UnicodeDecodeError):
+        return False
+    if not isinstance(config, dict) or not isinstance(config.get("agents"), dict):
+        return False
+    agents = config["agents"]
+    return all(
+        isinstance(agents.get(name), dict)
+        and all(agents[name].get(key) == value for key, value in settings.items())
+        for name, settings in required.items()
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target-home", type=Path, default=Path.home())
@@ -24,6 +41,8 @@ def main():
         ("fast.toml", ".codex/agents/fast.toml"),
         ("worker.toml", ".codex/agents/worker.toml"),
         ("reviewer.toml", ".codex/agents/reviewer.toml"),
+        ("explorer.toml", ".codex/agents/explorer.toml"),
+        ("default.toml", ".codex/agents/default.toml"),
         ("delegation.md", ".codex/AGENTS.md"),
         ("claude/fast.md", ".claude/agents/fast.md"),
         ("claude/worker.md", ".claude/agents/worker.md"),
@@ -32,6 +51,7 @@ def main():
         ("opencode/fast.md", ".config/opencode/agents/fast.md"),
         ("opencode/worker.md", ".config/opencode/agents/worker.md"),
         ("opencode/reviewer.md", ".config/opencode/agents/reviewer.md"),
+        ("opencode/opencode.jsonc", ".config/opencode/opencode.jsonc"),
         ("delegation.md", ".config/opencode/AGENTS.md"),
         ("grok/fast.md", ".grok/agents/fast.md"),
         ("grok/worker.md", ".grok/agents/worker.md"),
@@ -77,6 +97,10 @@ def main():
             parser.exit(1, f"Refusing to replace non-regular file: {target}\n")
         old = target.read_bytes() if target.exists() else None
         if old is not None and old != contents:
+            if relative_source == "opencode/opencode.jsonc" and opencode_agents_match(old, contents):
+                # Preserve the complete personal config, including its formatting.
+                changes.append((target, old, old))
+                continue
             digest = hashlib.sha256(old).hexdigest()
             if digest not in previous.get(relative_target, []):
                 parser.exit(1, f"Unrecognized existing instructions or agent; preserved unchanged: {target}\n")

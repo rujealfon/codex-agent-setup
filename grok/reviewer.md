@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Reviews complex logic, bugs, and security risks.
+description: Independently reviews changes for correctness, regressions, security issues, and missing validation.
 model: grok-4.7
 effort: high
 capabilityMode: read-only

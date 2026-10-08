@@ -1,5 +1,5 @@
 name = "worker"
-description = "Implements bounded features, bug fixes, and tests within an assigned scope."
+description = "Implements assigned changes within clear file ownership and verifies the affected behavior."
 model = "gpt-6.1-sol"
 model_reasoning_effort = "medium"
 developer_instructions = """

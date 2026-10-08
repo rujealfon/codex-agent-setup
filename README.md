@@ -1,22 +1,45 @@
 # codex-agent-setup
 
 Personal subagent definitions and delegation rules for Codex, Claude Code,
-OpenCode v2, and Grok Build. Each tool gets three roles with a configured model
-and effort level.
+OpenCode v2, and Grok Build. Codex and OpenCode get five roles; Claude Code and
+Grok Build get three.
+Each role has a configured model and effort level.
 The delegation rules apply across projects on the machine where you install them.
 
 ## Models and roles
 
-| Tool | `fast` | `worker` | `reviewer` |
-| --- | --- | --- | --- |
-| Codex | GPT-6 Luna, medium | GPT-6.1 Sol, medium | GPT-6 Astra, medium |
-| Claude Code | Haiku 5.5, medium | Sonnet 5.5, medium | Opus 5.5, medium |
-| OpenCode | Muse Spark 1.3 Contributor, xhigh | DeepSeek v4.1 Flash, max | GLM 5.3 Flash, max |
-| Grok Build | Grok 4.7, low | Grok 4.7, medium | Grok 4.7, high |
+| Tool | `fast` | `worker` | `reviewer` | `explorer` | `default` | `explore` | `general` |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Codex | `gpt-6-luna`, Medium | `gpt-6.1-sol`, Medium | `gpt-6-astra`, Medium | `gpt-6-luna`, High | `gpt-6.1-sol`, Medium | N/A | N/A |
+| Claude Code | Haiku 5.5, medium | Sonnet 5.5, medium | Opus 5.5, medium | N/A | N/A | N/A | N/A |
+| OpenCode | `opencode-go/muse-spark-1.3-contributor`, high | `opencode-go/deepseek-v4.1-flash`, max | `opencode-go/glm-5.3`, max | N/A | N/A | `opencode-go/muse-spark-1.3-contributor`, medium | `opencode-go/deepseek-v4.1-flash`, max |
+| Grok Build | Grok 4.7, low | Grok 4.7, medium | Grok 4.7, high | N/A | N/A | N/A | N/A |
 
-- `fast` handles focused searches and straightforward independent tasks.
-- `worker` implements bounded changes and runs relevant checks.
-- `reviewer` inspects complex correctness and security risks with read-only tools.
+- `fast` performs simple lookups, targeted searches, and mechanical checks.
+- `worker` implements defined changes within clear file ownership and verifies the affected behavior.
+- `reviewer` independently assesses correctness, regressions, security issues, and missing validation with read-only tools.
+- `explore` is OpenCode's built-in exploration subagent.
+- `general` is OpenCode's built-in general-purpose subagent.
+
+N/A means this setup does not provide that role for the tool.
+
+The shared policy routes deeper investigation to Codex `explorer`, OpenCode
+`explore`, or Claude Code's built-in `Explore` when available. Mixed work goes
+to Codex `default`, OpenCode `general`, or Claude Code's built-in
+`general-purpose` when available. These Claude built-ins keep their own model
+settings; this setup configures only Claude's three custom roles.
+For tools without a matching specialist, the primary agent handles the work or
+splits it into scoped assignments for available agents.
+
+Codex uses these descriptions and routing distinctions:
+
+| Agent | Description | Route here to |
+| --- | --- | --- |
+| `fast` | Performs simple lookups, targeted searches, and mechanical checks with concise results. | Find a symbol or check a fact. |
+| `explorer` | Investigates codebase behavior across files, traces execution paths, and returns evidence without editing code. | Explain how a flow works or where behavior originates. |
+| `worker` | Implements assigned changes within clear file ownership and verifies the affected behavior. | Implement a defined change. |
+| `reviewer` | Independently reviews changes for correctness, regressions, security issues, and missing validation. | Assess the resulting change. |
+| `default` | Handles general tasks that do not fit a specialist role, including mixed investigation and implementation. | Handle work that spans responsibilities without a clear specialist. |
 
 The primary agent delegates when independent work can run in parallel and doing
 so would improve speed or quality. It handles small tasks directly. The shared
@@ -24,12 +47,13 @@ policy is in [delegation.md](delegation.md).
 
 These definitions configure subagents. Select your daily main model separately
 in the tool's model selector or settings. The installer does not set the main
-model, main effort, or default primary agent.
+model, main effort, or default primary agent. The Codex `default` definition is
+a subagent role.
 
 Claude uses explicit `claude-haiku-5-5`, `claude-sonnet-5-5`, and
 `claude-opus-5-5` model IDs. OpenCode uses the `opencode-go` provider and encodes
-effort as a model variant, such as `#xhigh` or `#max`. Access to these models and
-variants depends on your account and provider. Check that they are available
+effort as a model variant, such as `#medium`, `#high`, or `#max`. Access to these
+models and variants depends on your account and provider. Check that they are available
 before using the agents. [Claude models](https://platform.claude.com/docs/en/models/overview),
 [OpenAI models](https://developers.openai.com/api/docs/models), and
 [OpenCode model variants](https://opencode.ai/v2/docs/models#variants).
@@ -48,7 +72,7 @@ across projects; they are separate from instruction files inside a repository.
 | --- | --- | --- | --- |
 | Codex | `~/.codex/AGENTS.md` | `~/.codex/AGENTS.md` | `~/.codex/agents/*.toml` |
 | Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/rules/delegation.md` | `~/.claude/agents/*.md` |
-| OpenCode v2 | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/agents/*.md` |
+| OpenCode v2 | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/agents/*.md`, `~/.config/opencode/opencode.jsonc` |
 | Grok Build | `~/.grok/AGENTS.md` or `~/.grok/rules/*.md` | `~/.grok/rules/delegation.md` | `~/.grok/agents/*.md` |
 
 Claude Code supports `~/.claude/CLAUDE.md` as global personal instructions.
@@ -57,6 +81,10 @@ It also loads global rules from `~/.claude/rules/`. This setup uses the separate
 An empty global `CLAUDE.md` is fine: the delegation rule still loads. There is no
 need to duplicate the policy in both files. [Claude global instructions](https://code.claude.com/docs/en/memory#choose-where-to-put-claudemd-files)
 and [global rules](https://code.claude.com/docs/en/memory#user-level-rules).
+
+OpenCode's `fast`, `worker`, and `reviewer` definitions live in
+`~/.config/opencode/agents/*.md`. Its `explore` and `general` model overrides
+live in `~/.config/opencode/opencode.jsonc`.
 
 For project-specific instructions, put `AGENTS.md` or `CLAUDE.md` inside the
 repository. Claude Code v2.1.277 and later can load project `AGENTS.md`, with
@@ -118,6 +146,14 @@ If you have existing personal instructions, review the reported conflict and
 merge the delegation policy into the appropriate instruction file manually.
 Keep your existing instructions. The installer does not perform this merge.
 
+If your customized `~/.config/opencode/opencode.jsonc` uses plain JSON and
+already contains all the specified `explore` and `general` agent fields, the
+installer preserves the entire file and continues. Extra settings, agents,
+and agent fields stay intact. Uninstall still preserves this customized file.
+Otherwise, it reports a conflict before changing any files. Merge the entries
+under `agents` from [opencode/opencode.jsonc](opencode/opencode.jsonc) manually.
+Configs with JSONC comments or trailing commas still require manual review.
+
 Start fresh tool sessions after installing. To preview installation under another
 home directory, use `--target-home /path/to/home --dry-run`. This option is also
 useful for testing the installer without changing your personal configuration.
@@ -136,14 +172,16 @@ Remove the recognized agent definitions and delegation rules:
 python3 install-agents.py --uninstall
 ```
 
-Uninstall checks the same sixteen destinations as installation. It removes files
+Uninstall checks the same nineteen destinations as installation. It removes files
 that match the current definitions or recorded earlier versions of this setup.
 Customized files, empty personal instruction files, symlinks, and directories
 are preserved and reported for manual review. Recognized files are still removed
 when other files need manual review; the command exits with status `1` if any
 destination was preserved. Missing files are harmless, so you can rerun it.
 
-App settings, credentials, other agents, and upgrade backups stay in place.
+Customized app settings, credentials, other agents, and upgrade backups stay in place.
+The setup-owned OpenCode `opencode.jsonc` is removed when its contents match
+the current setup or a recorded earlier version.
 Backups are not restored automatically. To recover an earlier instruction file,
 review its `.bak-<UTC timestamp>` copy and restore or merge it manually. Start
 fresh tool sessions after uninstalling.
@@ -155,9 +193,10 @@ Use `--target-home /path/to/home` to uninstall from another home directory.
 
 | Path | Purpose |
 | --- | --- |
-| `fast.toml`, `worker.toml`, `reviewer.toml` | Codex agent definitions |
+| `fast.toml`, `worker.toml`, `reviewer.toml`, `explorer.toml`, `default.toml` | Codex agent definitions |
 | `claude/*.md` | Claude Code agent definitions |
 | `opencode/*.md` | OpenCode v2 agent definitions |
+| `opencode/opencode.jsonc` | OpenCode v2 built-in `explore` and `general` model overrides |
 | `grok/*.md` | Grok Build agent definitions |
 | `delegation.md` | Shared delegation policy copied to each tool's global instruction location |
 | `install-agents.py` | Combined installer and uninstaller for all four tools |

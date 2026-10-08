@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import subprocess
 import sys
 import tempfile
@@ -16,7 +17,7 @@ class UninstallTests(unittest.TestCase):
         installed = self.run_command()
         self.assertEqual(installed.returncode, 0, installed.stderr)
         self.installed_files = [path for path in self.home.rglob("*") if path.is_file()]
-        self.assertEqual(len(self.installed_files), 16)
+        self.assertEqual(len(self.installed_files), 19)
 
     def run_command(self, *arguments):
         return subprocess.run(
@@ -62,6 +63,96 @@ class UninstallTests(unittest.TestCase):
         for target, source in expected.items():
             with self.subTest(target=target):
                 self.assertEqual((self.home / target).read_bytes(), (ROOT / source).read_bytes())
+
+    def test_update_replaces_previous_opencode_agents_and_backs_them_up(self):
+        earlier = {}
+        for name, current, previous in (
+            ("fast", "#high", "#xhigh"),
+            ("reviewer", "glm-5.3#max", "glm-5.3-flash#max"),
+        ):
+            agent = self.home / f".config/opencode/agents/{name}.md"
+            old_description = {
+                "fast": "Handles focused exploration and straightforward independent tasks.",
+                "reviewer": "Reviews complex logic, bugs, and security risks.",
+            }[name]
+            lines = agent.read_text().replace(current, previous).splitlines()
+            earlier[agent] = ("\n".join(
+                "description: " + old_description if line.startswith("description: ") else line
+                for line in lines
+            ) + "\n").encode()
+            agent.write_bytes(earlier[agent])
+
+        upgraded = self.run_command("--update")
+        self.assertEqual(upgraded.returncode, 0, upgraded.stderr)
+        for agent, contents in earlier.items():
+            self.assertEqual(agent.read_bytes(), (ROOT / "opencode" / agent.name).read_bytes())
+            backups = list(agent.parent.glob(agent.name + ".bak-*"))
+            self.assertEqual(len(backups), 1)
+            self.assertEqual(backups[0].read_bytes(), contents)
+
+    def test_customized_opencode_jsonc_blocks_update_and_is_preserved_on_uninstall(self):
+        config = self.home / ".config/opencode/opencode.jsonc"
+        config.write_text(config.read_text() + "\n// Personal settings\n")
+        before = {path: path.read_bytes() for path in self.installed_files}
+        upgraded = self.run_command("--update")
+        self.assertEqual(upgraded.returncode, 1)
+        self.assertEqual({path: path.read_bytes() for path in before}, before)
+
+        removed = self.run_command("--uninstall")
+        self.assertEqual(removed.returncode, 1)
+        self.assertEqual(config.read_bytes(), before[config])
+        self.assertTrue(all(not path.exists() for path in self.installed_files if path != config))
+
+    def test_update_preserves_compatible_personal_opencode_config_exactly(self):
+        config = self.home / ".config/opencode/opencode.jsonc"
+        personal = json.loads(config.read_text())
+        personal["mcp"] = {"personal": {"type": "local", "command": ["my-mcp"]}}
+        personal["agents"]["explore"]["temperature"] = 0.2
+        personal["agents"]["personal"] = {"model": "my-provider/my-model"}
+        contents = (json.dumps(personal, indent=4) + "\n\n").encode()
+        config.write_bytes(contents)
+
+        for arguments in (("--update", "--dry-run"), ("--update",), ("--update",)):
+            with self.subTest(arguments=arguments):
+                upgraded = self.run_command(*arguments)
+                self.assertEqual(upgraded.returncode, 0, upgraded.stderr)
+                self.assertEqual(config.read_bytes(), contents)
+                self.assertEqual(list(config.parent.glob(config.name + ".bak-*")), [])
+
+        removed = self.run_command("--uninstall")
+        self.assertEqual(removed.returncode, 1)
+        self.assertEqual(config.read_bytes(), contents)
+        self.assertTrue(all(not path.exists() for path in self.installed_files if path != config))
+
+    def test_opencode_model_conflict_blocks_update_before_any_write(self):
+        config = self.home / ".config/opencode/opencode.jsonc"
+        personal = json.loads(config.read_text())
+        personal["agents"]["explore"]["model"] = "personal-provider/personal-model"
+        personal["mcp"] = {"personal": {"type": "local", "command": ["my-mcp"]}}
+        config.write_text(json.dumps(personal))
+        policy = self.home / ".codex/AGENTS.md"
+        policy.write_bytes(b"")
+        before = {path: path.read_bytes() for path in self.installed_files}
+
+        upgraded = self.run_command("--update")
+        self.assertEqual(upgraded.returncode, 1)
+        self.assertNotIn("Traceback", upgraded.stderr)
+        self.assertEqual({path: path.read_bytes() for path in before}, before)
+        self.assertEqual(set(self.home.rglob("*.bak-*")), set())
+
+    def test_invalid_opencode_config_blocks_update_without_mutation(self):
+        config = self.home / ".config/opencode/opencode.jsonc"
+        policy = self.home / ".codex/AGENTS.md"
+        policy.write_bytes(b"")
+        for contents in ("{invalid json", "[]", '{"agents": []}'):
+            with self.subTest(contents=contents):
+                config.write_text(contents)
+                before = {path: path.read_bytes() for path in self.installed_files}
+                upgraded = self.run_command("--update")
+                self.assertEqual(upgraded.returncode, 1)
+                self.assertNotIn("Traceback", upgraded.stderr)
+                self.assertEqual({path: path.read_bytes() for path in before}, before)
+                self.assertEqual(set(self.home.rglob("*.bak-*")), set())
 
     def test_uninstall_preserves_grok_config_credentials_and_customized_agent(self):
         config = self.home / ".grok/config.toml"

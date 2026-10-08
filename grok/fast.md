@@ -1,6 +1,6 @@
 ---
 name: fast
-description: Handles focused exploration and straightforward independent tasks.
+description: Performs simple lookups, targeted searches, and mechanical checks with concise results.
 model: grok-4.7
 effort: low
 ---
