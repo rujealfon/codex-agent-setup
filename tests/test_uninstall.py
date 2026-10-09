@@ -175,6 +175,21 @@ class UninstallTests(unittest.TestCase):
             self.assertEqual(len(backups), 1)
             self.assertEqual(backups[0].read_bytes(), contents)
 
+    def test_update_replaces_installed_glm_53_reviewer(self):
+        agent = self.home / ".config/opencode/agents/reviewer.md"
+        previous = agent.read_bytes().replace(
+            b"opencode-go/glm-5.3-flash#max",
+            b"opencode-go/glm-5.3#max",
+        )
+        agent.write_bytes(previous)
+
+        upgraded = self.run_command("--update")
+        self.assertEqual(upgraded.returncode, 0, upgraded.stderr)
+        self.assertEqual(agent.read_bytes(), (ROOT / "opencode" / "reviewer.md").read_bytes())
+        backups = list(agent.parent.glob(agent.name + ".bak-*"))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(backups[0].read_bytes(), previous)
+
     def test_customized_opencode_jsonc_blocks_update_and_is_preserved_on_uninstall(self):
         config = self.home / ".config/opencode/opencode.jsonc"
         config.write_text(config.read_text() + "\n// Personal settings\n")
