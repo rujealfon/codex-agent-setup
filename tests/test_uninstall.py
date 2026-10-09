@@ -7,13 +7,20 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+POLICIES = {
+    ".codex/AGENTS.md": "codex/AGENTS.md",
+    ".claude/rules/delegation.md": "claude/rules/delegation.md",
+    ".config/opencode/AGENTS.md": "opencode/AGENTS.md",
+    ".grok/rules/delegation.md": "grok/rules/delegation.md",
+}
+LEGACY_POLICY = (ROOT / "tests/fixtures/shared-delegation.md").read_bytes()
 
 
 class UninstallTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory(prefix="agent-uninstall-test-")
         self.addCleanup(self.directory.cleanup)
-        self.home = Path(self.directory.name) / "home"
+        self.home = Path(self.directory.name).resolve() / "home"
         installed = self.run_command()
         self.assertEqual(installed.returncode, 0, installed.stderr)
         self.installed_files = [path for path in self.home.rglob("*") if path.is_file()]
@@ -52,7 +59,7 @@ class UninstallTests(unittest.TestCase):
             ".grok/agents/fast.md": "grok/fast.md",
             ".grok/agents/worker.md": "grok/worker.md",
             ".grok/agents/reviewer.md": "grok/reviewer.md",
-            ".grok/rules/delegation.md": "delegation.md",
+            ".grok/rules/delegation.md": "grok/rules/delegation.md",
         }
         installed = {
             str(path.relative_to(self.home))
@@ -63,6 +70,84 @@ class UninstallTests(unittest.TestCase):
         for target, source in expected.items():
             with self.subTest(target=target):
                 self.assertEqual((self.home / target).read_bytes(), (ROOT / source).read_bytes())
+
+    def test_provider_policies_are_installed_exactly(self):
+        for target, source in POLICIES.items():
+            with self.subTest(target=target):
+                self.assertEqual((self.home / target).read_bytes(), (ROOT / source).read_bytes())
+        self.assertEqual(len({(self.home / target).read_bytes() for target in POLICIES}), 4)
+
+    def install_legacy_policies(self):
+        for target in POLICIES:
+            (self.home / target).write_bytes(LEGACY_POLICY)
+
+    def test_shared_legacy_policies_require_update_without_mutation(self):
+        self.install_legacy_policies()
+        before = {path: path.read_bytes() for path in self.installed_files}
+
+        result = self.run_command()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("--update", result.stderr)
+        self.assertEqual({path: path.read_bytes() for path in self.home.rglob("*") if path.is_file()}, before)
+
+    def test_shared_legacy_policy_update_dry_run_preserves_every_file(self):
+        self.install_legacy_policies()
+        before = {path: path.read_bytes() for path in self.installed_files}
+        entries = set(self.home.rglob("*"))
+
+        result = self.run_command("--update", "--dry-run")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual({path: path.read_bytes() for path in self.installed_files}, before)
+        self.assertEqual(set(self.home.rglob("*")), entries)
+        for target in POLICIES:
+            self.assertIn(f"Update: {self.home / target}", result.stdout)
+
+    def test_shared_legacy_policies_upgrade_with_exact_backups(self):
+        self.install_legacy_policies()
+        result = self.run_command("--update")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        backups = []
+        for target, source in POLICIES.items():
+            policy = self.home / target
+            with self.subTest(target=target):
+                self.assertEqual(policy.read_bytes(), (ROOT / source).read_bytes())
+                matches = list(policy.parent.glob(policy.name + ".bak-*"))
+                self.assertEqual(len(matches), 1)
+                self.assertEqual(matches[0].read_bytes(), LEGACY_POLICY)
+                backups.extend(matches)
+        self.assertEqual(set(self.home.rglob("*.bak-*")), set(backups))
+
+        removed = self.run_command("--uninstall")
+        self.assertEqual(removed.returncode, 0, removed.stderr)
+        self.assertTrue(all(not path.exists() for path in self.installed_files))
+        self.assertTrue(all(path.read_bytes() == LEGACY_POLICY for path in backups))
+
+    def test_customized_legacy_policy_blocks_all_updates_and_survives_uninstall(self):
+        for target in POLICIES:
+            with self.subTest(target=target):
+                installed = self.run_command()
+                self.assertEqual(installed.returncode, 0, installed.stderr)
+                self.install_legacy_policies()
+                custom = self.home / target
+                custom.write_bytes(LEGACY_POLICY + b"\nMy personal delegation rule\n")
+                before = {path: path.read_bytes() for path in self.installed_files}
+
+                result = self.run_command("--update")
+                self.assertEqual(result.returncode, 1)
+                self.assertIn(str(custom), result.stderr)
+                self.assertEqual({path: path.read_bytes() for path in self.home.rglob("*") if path.is_file()}, before)
+
+                removed = self.run_command("--uninstall")
+                self.assertEqual(removed.returncode, 1)
+                self.assertEqual(custom.read_bytes(), before[custom])
+                self.assertTrue(all(not path.exists() for path in self.installed_files if path != custom))
+                custom.unlink()
+
+    def test_uninstall_recognizes_shared_legacy_policies(self):
+        self.install_legacy_policies()
+        result = self.run_command("--uninstall")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(all(not path.exists() for path in self.installed_files))
 
     def test_update_replaces_previous_opencode_agents_and_backs_them_up(self):
         earlier = {}

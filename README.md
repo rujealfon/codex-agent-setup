@@ -3,15 +3,16 @@
 Personal subagent definitions and delegation rules for Codex, Claude Code,
 OpenCode v2, and Grok Build. Codex and OpenCode get five roles; Claude Code and
 Grok Build get three.
-Each role has a configured model and effort level.
+Each role has a configured model. Codex and Claude Code reasoning effort is chosen
+by the primary agent for each task; other tools keep configured effort levels.
 The delegation rules apply across projects on the machine where you install them.
 
 ## Models and roles
 
 | Tool | `fast` | `worker` | `reviewer` | `explorer` | `default` | `explore` | `general` |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Codex | `gpt-6-luna`, Medium | `gpt-6.1-sol`, Medium | `gpt-6-astra`, Medium | `gpt-6-luna`, High | `gpt-6.1-sol`, Medium | N/A | N/A |
-| Claude Code | Haiku 5.5, medium | Sonnet 5.5, medium | Opus 5.5, medium | N/A | N/A | N/A | N/A |
+| Codex | `gpt-6-luna` | `gpt-6.1-sol` | `gpt-6-astra` | `gpt-6-luna` | `gpt-6.1-sol` | N/A | N/A |
+| Claude Code | Haiku 5.5 | Sonnet 5.5 | Opus 5.5 | N/A | N/A | N/A | N/A |
 | OpenCode | `opencode-go/muse-spark-1.3-contributor`, high | `opencode-go/deepseek-v4.1-flash`, max | `opencode-go/glm-5.3`, max | N/A | N/A | `opencode-go/muse-spark-1.3-contributor`, medium | `opencode-go/deepseek-v4.1-flash`, max |
 | Grok Build | Grok 4.7, low | Grok 4.7, medium | Grok 4.7, high | N/A | N/A | N/A | N/A |
 
@@ -23,7 +24,8 @@ The delegation rules apply across projects on the machine where you install them
 
 N/A means this setup does not provide that role for the tool.
 
-The shared policy routes deeper investigation to Codex `explorer`, OpenCode
+Each provider has its own delegation policy. Those policies route deeper
+investigation to Codex `explorer`, OpenCode
 `explore`, or Claude Code's built-in `Explore` when available. Mixed work goes
 to Codex `default`, OpenCode `general`, or Claude Code's built-in
 `general-purpose` when available. These Claude built-ins keep their own model
@@ -31,24 +33,108 @@ settings; this setup configures only Claude's three custom roles.
 For tools without a matching specialist, the primary agent handles the work or
 splits it into scoped assignments for available agents.
 
-Codex uses these descriptions and routing distinctions:
+### Claude orchestration
 
-| Agent | Description | Route here to |
+The three custom roles complement Claude's built-in agents. Keep coordination,
+scope decisions, integration, and final verification in the primary conversation.
+
+| Agent | Assignment | Tool access |
 | --- | --- | --- |
-| `fast` | Performs simple lookups, targeted searches, and mechanical checks with concise results. | Find a symbol or check a fact. |
-| `explorer` | Investigates codebase behavior across files, traces execution paths, and returns evidence without editing code. | Explain how a flow works or where behavior originates. |
-| `worker` | Implements assigned changes within clear file ownership and verifies the affected behavior. | Implement a defined change. |
-| `reviewer` | Independently reviews changes for correctness, regressions, security issues, and missing validation. | Assess the resulting change. |
-| `default` | Handles general tasks that do not fit a specialist role, including mixed investigation and implementation. | Handle work that spans responsibilities without a clear specialist. |
+| `fast` | Bounded factual lookup or file discovery with references | Read, Glob, Grep, LSP, WebFetch, WebSearch |
+| `Explore` built-in | Trace behavior and dependencies across the codebase | Built-in read-only tools |
+| `Plan` built-in | Gather research during plan mode | Built-in read-only tools |
+| `worker` | Implement an agreed change within owned files and verify it | Inherited tools, including shell, editing, skills, and MCP; Agent disabled |
+| `reviewer` | Review a supplied diff for concrete defects and explain their impact | Read, Glob, Grep, LSP, WebFetch, WebSearch |
+| `general-purpose` built-in | Mixed investigation and action without a matching specialist | Built-in available tools |
+
+Use only the stages the task needs. For a change that needs investigation, gather
+evidence first, then assign workers distinct file ownership and acceptance
+criteria. Integrate their changes before reviewing the combined diff. Give the
+reviewer the baseline, diff, requirements, and test output: its inspection-only
+tools cannot run git or tests. The primary agent validates findings, coordinates
+fixes, and checks the result. Independent lookups or workers can run in parallel;
+work that depends on their output waits for it.
+
+Explore and Plan skip CLAUDE.md, so include relevant project constraints in their
+assignments. Workers retain inherited tools for project-specific workflows but
+cannot spawn further subagents through Agent. Fast and reviewer use explicit
+inspection tool lists, which also exclude shell, edits, and MCP tools. Send work
+requiring those tools to the primary agent or a suitably scoped worker.
+This setup keeps all three custom models fixed and leaves effort to the primary
+agent. Add another custom role only for a recurring task with distinct tools or
+instructions that these roles and the built-ins do not cover.
+[Claude routing and tools](https://code.claude.com/docs/en/sub-agents)
+
+### Codex orchestration
+
+The five roles cover narrow lookup, codebase investigation, implementation,
+independent review, and mixed work. Keep coordination and final verification in
+the primary agent; these custom agents return their assigned work directly.
+
+| Agent | Assignment | Configuration |
+| --- | --- | --- |
+| `fast` | Bounded factual lookup or file discovery with references | Luna; read-only sandbox |
+| `explorer` | Trace behavior, dependencies, and likely causes across files | Luna; read-only sandbox |
+| `worker` | Implement an agreed change within owned files and verify it | Sol; inherited permissions |
+| `reviewer` | Review a specified diff for concrete defects and explain their impact | Astra; read-only sandbox |
+| `default` | Bounded mixed investigation and implementation without a matching specialist | Sol; inherited permissions |
+
+Give each assignment its objective, relevant context, file ownership or read-only
+scope, acceptance criteria, and expected evidence. Gather any required investigation
+before starting workers. Parallelize independent work with distinct file ownership,
+then integrate before reviewing the combined change. Supply reviewers with the
+baseline, requirements, and validation results. The primary agent verifies findings,
+coordinates fixes, and reruns affected checks. Use only the stages a task needs.
+
+Fast, explorer, and reviewer are configured with `sandbox_mode = "read-only"`.
+Codex can reapply parent runtime permission overrides when spawning, so these are
+sandbox defaults rather than an unconditional guarantee. A filesystem sandbox also
+does not make external connector tools read-only. Their prompts require inspection
+operations across tools. A reviewer can inspect git history or diffs through available
+read-only commands; send checks that need writes to the primary agent or a worker.
+
+Workers and default agents retain inherited project tools. Further delegation is
+left to the primary agent by instruction, rather than a Claude-style Agent tool
+restriction. All five roles retain their configured models and omit fixed effort.
+An ambiguous task or weak result should return to the primary agent for a clearer
+assignment or different specialist, rather than spawning an additional hierarchy.
+[Codex agent configuration and permissions](https://learn.chatgpt.com/docs/agent-configuration/subagents)
 
 The primary agent delegates when independent work can run in parallel and doing
-so would improve speed or quality. It handles small tasks directly. The shared
-policy is in [delegation.md](delegation.md).
+so would improve speed or quality. It handles small tasks directly. Edit the
+provider-specific policies listed below to change how each tool delegates work.
 
 These definitions configure subagents. Select your daily main model separately
 in the tool's model selector or settings. The installer does not set the main
 model, main effort, or default primary agent. The Codex `default` definition is
 a subagent role.
+
+Codex agent files omit `model_reasoning_effort` so the primary agent can select
+an effort when spawning each subagent. The delegation policy asks it to choose
+low for simple lookups, medium for routine implementation, and high for complex
+investigation or review, using a level supported by the selected model.
+This is a choice made at spawn time. Omitting the field alone uses Codex's
+resolved default or inherited effort; it does not enable automatic task-based
+selection. Custom agent files that explicitly set effort override spawn settings.
+[Codex subagent settings](https://learn.chatgpt.com/docs/agent-configuration/subagents)
+
+For existing installations, run `python3 install-agents.py --update` to replace
+the earlier definitions and delegation policy with backups. The installer leaves
+`~/.codex/config.toml` unchanged. If you want the model default as the fallback
+when no effort is selected at spawn time, remove
+`default_subagent_reasoning_effort` from its `[agents]` table. Explicit spawn
+effort takes precedence over that global default either way.
+
+Claude agent files omit `effort`. On Claude Code v2.1.292 or later, its
+delegation policy asks the primary agent to pass a supported effort level through
+the Agent tool for each non-fork subagent invocation, using the same task guidance
+as Codex. On older versions, agents fall back to the session effort and the primary
+agent reports the limitation. Omitting `effort` alone does not select a level
+based on the task. `CLAUDE_CODE_EFFORT_LEVEL`, if set, overrides per-invocation
+choices. Unset that environment variable to let the primary agent choose effort.
+The installer leaves Claude settings and shell environment variables unchanged.
+Restart Claude Code after updating to load the new agent definitions.
+[Claude subagent effort](https://code.claude.com/docs/en/sub-agents#choose-an-effort-level)
 
 Claude uses explicit `claude-haiku-5-5`, `claude-sonnet-5-5`, and
 `claude-opus-5-5` model IDs. OpenCode uses the `opencode-go` provider and encodes
@@ -68,12 +154,28 @@ edits and shell execution. These fields follow the
 `~` means your home directory. These paths are personal configuration and apply
 across projects; they are separate from instruction files inside a repository.
 
-| Tool | Global instruction file | Where this setup installs the delegation policy | Agent definitions |
-| --- | --- | --- | --- |
-| Codex | `~/.codex/AGENTS.md` | `~/.codex/AGENTS.md` | `~/.codex/agents/*.toml` |
-| Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/rules/delegation.md` | `~/.claude/agents/*.md` |
-| OpenCode v2 | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/agents/*.md`, `~/.config/opencode/opencode.jsonc` |
-| Grok Build | `~/.grok/AGENTS.md` or `~/.grok/rules/*.md` | `~/.grok/rules/delegation.md` | `~/.grok/agents/*.md` |
+| Tool | Policy source in this repo | Installed policy |
+| --- | --- | --- |
+| Codex | [codex/AGENTS.md](codex/AGENTS.md) | `~/.codex/AGENTS.md` |
+| Claude Code | [claude/rules/delegation.md](claude/rules/delegation.md) | `~/.claude/rules/delegation.md` |
+| OpenCode v2 | [opencode/AGENTS.md](opencode/AGENTS.md) | `~/.config/opencode/AGENTS.md` |
+| Grok Build | [grok/rules/delegation.md](grok/rules/delegation.md) | `~/.grok/rules/delegation.md` |
+
+Each policy contains only its provider's roles, effort controls, and delegation
+instructions. These destinations match the tools' global instruction discovery:
+[Codex AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md),
+[Claude user-level rules](https://code.claude.com/docs/en/memory#user-level-rules),
+[OpenCode instructions](https://opencode.ai/v2/docs/instructions), and
+[Grok rules directories](https://github.com/xai-org/grok-build/blob/main/crates/codegen/xai-grok-pager/docs/user-guide/12-project-rules.md#rules-directories).
+
+The former root `delegation.md` has been replaced by these four source files.
+Installed paths are unchanged. Run `python3 install-agents.py --update` to replace
+recognized shared policies with the provider-specific versions and retain backups.
+Customized instructions still stop the update before any files are changed.
+
+Agent definitions install into `~/.codex/agents/`, `~/.claude/agents/`,
+`~/.config/opencode/agents/`, and `~/.grok/agents/`, respectively. OpenCode's
+built-in role overrides also install into `~/.config/opencode/opencode.jsonc`.
 
 Claude Code supports `~/.claude/CLAUDE.md` as global personal instructions.
 It also loads global rules from `~/.claude/rules/`. This setup uses the separate
@@ -103,8 +205,10 @@ and [OpenCode v2 instructions](https://opencode.ai/v2/docs/instructions).
 Grok Build loads global rules from `~/.grok/rules/` and project `AGENTS.md`
 files. This setup installs native Grok agents and a separate delegation rule;
 it does not change `~/.grok/config.toml` or your main model. Project agents under
-`.grok/agents/` can override the global agents with the same names. Grok can
-also load Claude instruction files and rules through its compatibility settings.
+`.grok/agents/` can override the global agents with the same names. Grok may also
+load Claude instruction files and global rules when its compatibility settings
+enable them. Each policy states which provider session it applies to. This
+installer leaves compatibility settings unchanged.
 Use `grok inspect --json` to inspect discovered configuration and `/config-agents`
 to check the available agents. See
 [Grok instructions](https://docs.x.ai/build/features/project-rules) and
@@ -194,10 +298,13 @@ Use `--target-home /path/to/home` to uninstall from another home directory.
 ```text
 coding-agent-setup/
 ├── codex/
+│   └── AGENTS.md
 ├── claude/
+│   └── rules/delegation.md
 ├── opencode/
+│   └── AGENTS.md
 ├── grok/
-├── delegation.md
+│   └── rules/delegation.md
 ├── install-agents.py
 ├── install-claude-opencode.py
 ├── previous-install-hashes.json
@@ -210,14 +317,16 @@ coding-agent-setup/
 | --- | --- |
 | `codex/*.toml` | Codex agent definitions |
 | `claude/*.md` | Claude Code agent definitions |
-| `opencode/*.md` | OpenCode v2 agent definitions |
+| `opencode/{fast,worker,reviewer}.md` | OpenCode v2 agent definitions |
 | `opencode/opencode.jsonc` | OpenCode v2 built-in `explore` and `general` model overrides |
 | `grok/*.md` | Grok Build agent definitions |
-| `delegation.md` | Shared delegation policy copied to each tool's global instruction location |
+| `codex/AGENTS.md`, `opencode/AGENTS.md` | Provider-specific global delegation instructions |
+| `claude/rules/delegation.md`, `grok/rules/delegation.md` | Provider-specific global delegation rules |
 | `install-agents.py` | Combined installer and uninstaller for all four tools |
 | `install-claude-opencode.py` | Compatibility entry point that calls the combined installer |
 | `previous-install-hashes.json` | Fingerprints of recognized earlier configurations for safe upgrades |
-| `tests/test_uninstall.py` | Tests removal and preservation behavior in temporary home directories |
+| `tests/test_uninstall.py` | Tests installation, upgrades, removal, and preservation in temporary home directories |
+| `tests/fixtures/shared-delegation.md` | Frozen shared policy for upgrade regression tests |
 
 The installer resolves source files relative to its own location, so the clone
 can live anywhere. Repository files are the editable source; installed copies
