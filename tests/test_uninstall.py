@@ -153,7 +153,7 @@ class UninstallTests(unittest.TestCase):
         earlier = {}
         for name, current, previous in (
             ("fast", "#high", "#xhigh"),
-            ("reviewer", "glm-5.3#max", "glm-5.3-flash#max"),
+            ("reviewer", "glm-5.3-flash#max", "glm-5.3#max"),
         ):
             agent = self.home / f".config/opencode/agents/{name}.md"
             old_description = {
