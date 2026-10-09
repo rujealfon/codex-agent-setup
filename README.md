@@ -3,14 +3,15 @@
 Personal subagent definitions and delegation rules for Codex, Claude Code,
 OpenCode v2, and Grok Build. Codex and OpenCode get five roles; Claude Code and
 Grok Build get three.
-Each role has a configured model and effort level.
+Each role has a configured model. Codex reasoning effort is chosen by the primary
+agent for each task; other tools keep configured effort levels.
 The delegation rules apply across projects on the machine where you install them.
 
 ## Models and roles
 
 | Tool | `fast` | `worker` | `reviewer` | `explorer` | `default` | `explore` | `general` |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Codex | `gpt-6-luna`, Medium | `gpt-6.1-sol`, Medium | `gpt-6-astra`, Medium | `gpt-6-luna`, High | `gpt-6.1-sol`, Medium | N/A | N/A |
+| Codex | `gpt-6-luna` | `gpt-6.1-sol` | `gpt-6-astra` | `gpt-6-luna` | `gpt-6.1-sol` | N/A | N/A |
 | Claude Code | Haiku 5.5, medium | Sonnet 5.5, medium | Opus 5.5, medium | N/A | N/A | N/A | N/A |
 | OpenCode | `opencode-go/muse-spark-1.3-contributor`, high | `opencode-go/deepseek-v4.1-flash`, max | `opencode-go/glm-5.3`, max | N/A | N/A | `opencode-go/muse-spark-1.3-contributor`, medium | `opencode-go/deepseek-v4.1-flash`, max |
 | Grok Build | Grok 4.7, low | Grok 4.7, medium | Grok 4.7, high | N/A | N/A | N/A | N/A |
@@ -49,6 +50,22 @@ These definitions configure subagents. Select your daily main model separately
 in the tool's model selector or settings. The installer does not set the main
 model, main effort, or default primary agent. The Codex `default` definition is
 a subagent role.
+
+Codex agent files omit `model_reasoning_effort` so the primary agent can select
+an effort when spawning each subagent. The delegation policy asks it to choose
+low for simple lookups, medium for routine implementation, and high for complex
+investigation or review, using a level supported by the selected model.
+This is a choice made at spawn time. Omitting the field alone uses Codex's
+resolved default or inherited effort; it does not enable automatic task-based
+selection. Custom agent files that explicitly set effort override spawn settings.
+[Codex subagent settings](https://learn.chatgpt.com/docs/agent-configuration/subagents)
+
+For existing installations, run `python3 install-agents.py --update` to replace
+the earlier definitions and delegation policy with backups. The installer leaves
+`~/.codex/config.toml` unchanged. If you want the model default as the fallback
+when no effort is selected at spawn time, remove
+`default_subagent_reasoning_effort` from its `[agents]` table. Explicit spawn
+effort takes precedence over that global default either way.
 
 Claude uses explicit `claude-haiku-5-5`, `claude-sonnet-5-5`, and
 `claude-opus-5-5` model IDs. OpenCode uses the `opencode-go` provider and encodes

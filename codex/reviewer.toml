@@ -1,7 +1,6 @@
 name = "reviewer"
 description = "Independently reviews changes for correctness, regressions, security issues, and missing validation."
 model = "gpt-6-astra"
-model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 developer_instructions = """
 Review the assigned changes for concrete defects.

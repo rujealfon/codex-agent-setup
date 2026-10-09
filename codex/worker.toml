@@ -1,7 +1,6 @@
 name = "worker"
 description = "Implements assigned changes within clear file ownership and verifies the affected behavior."
 model = "gpt-6.1-sol"
-model_reasoning_effort = "medium"
 developer_instructions = """
 Implement the assigned change within the specified files and requirements.
 Follow the project's conventions and run the checks relevant to the change.
